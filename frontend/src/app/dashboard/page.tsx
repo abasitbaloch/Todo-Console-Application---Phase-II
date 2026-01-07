@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '../../lib/client-auth';
+import { authService } from '@/lib/client-auth';
 import { api } from '../../lib/api';
 import { User, Task } from '@/lib/types';
 import TaskList from '@/components/TaskList';

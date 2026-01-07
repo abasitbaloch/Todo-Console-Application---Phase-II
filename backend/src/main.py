@@ -2,9 +2,22 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import SQLModel, create_engine
 # Use absolute import style for the container
 from src.core.config import settings
 from src.api import auth, tasks
+from src.models import User, Task
+
+# --- DATABASE AUTO-CREATION ---
+# Create the engine for the writable /tmp/ directory
+engine = create_engine(
+    settings.DATABASE_URL, 
+    connect_args={"check_same_thread": False}
+)
+
+# This creates the 'users' and 'tasks' tables on startup
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
 
 # Create FastAPI application
 app = FastAPI(
@@ -13,19 +26,21 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# --- CORS CONFIGURATION ---
-# We take the origins directly from your Hugging Face Secret
-origins = settings.CORS_ORIGINS if hasattr(settings, "CORS_ORIGINS") else ["*"]
+# --- STARTUP EVENT ---
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
 
+# --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For testing, we allow all. We can tighten this later.
+    allow_origins=["*"], # Allows Vercel to communicate with Hugging Face
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- HOME ROUTE (To fix the 404) ---
+# --- HOME ROUTE ---
 @app.get("/")
 async def root():
     return {"status": "online", "message": "Backend is running! Try /docs for API"}
@@ -36,7 +51,10 @@ async def health_check():
     return {"status": "ok", "message": "Todo API is running"}
 
 # --- ROUTER REGISTRATION ---
+# Standard routes
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+
+# Backup routes for /api prefix
 app.include_router(auth.router, prefix="/api/auth", tags=["auth-backup"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks-backup"])

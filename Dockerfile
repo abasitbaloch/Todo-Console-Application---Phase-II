@@ -1,16 +1,15 @@
 FROM python:3.11-slim
 
-WORKDIR /code
+# Step 1: Set the working directory to the backend folder
+WORKDIR /code/backend
 
-# Copy requirements first for faster building
+# Step 2: Copy requirements and install
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire backend folder content into /code
-COPY backend/ /code/
+# Step 3: Copy all files from the local backend folder into the container's working directory
+COPY backend/ .
 
-# Set the environment variable so Python can find the 'src' module
-ENV PYTHONPATH=/code
-
-# Run uvicorn pointing exactly to the main.py inside src
+# Step 4: Run uvicorn. Since we are already inside /code/backend, 
+# and main.py is in src/, we use src.main:app
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "7860"]

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/lib/client-auth';
+import { authService } from '../../lib/client-auth';
 
 export default function DashboardLayout({
   children,

@@ -20,4 +20,4 @@ ENV HOME=/home/user \
 	PATH=/home/user/.local/bin:$PATH
 
 # Hugging Face expects the app to run on port 7860
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "backend.src.main:app", "--host", "0.0.0.0", "--port", "7860"]

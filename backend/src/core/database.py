@@ -1,36 +1,31 @@
-"""Database configuration with asyncpg and connection pooling."""
-
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlmodel.ext.asyncio.session import AsyncSession
-from typing import AsyncGenerator
-
+from sqlmodel import create_engine
 from .config import settings
 
-
-# Create async engine with connection pooling
-engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.ENVIRONMENT == "development",
-    pool_size=5,
-    max_overflow=10,
-    pool_recycle=3600,  # Recycle connections after 1 hour
-    pool_pre_ping=True,  # Verify connections before using
+# --- ASYNC ENGINE (For FastAPI Routes) ---
+# Ensures the URL uses sqlite+aiosqlite://
+async_url = settings.DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://")
+async_engine = create_async_engine(
+    async_url,
+    echo=True,
+    connect_args={"check_same_thread": False}
 )
 
-# Create async session maker
+# --- SYNC ENGINE (For Table Creation in main.py) ---
+# Ensures the URL uses standard sqlite://
+sync_url = settings.DATABASE_URL.replace("sqlite+aiosqlite://", "sqlite://")
+sync_engine = create_engine(
+    sync_url,
+    connect_args={"check_same_thread": False}
+)
+
+# Session generator for your API routes
 async_session_maker = sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
+    async_engine, class_=AsyncSession, expire_on_commit=False
 )
 
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency for getting database sessions.
-
-    Yields:
-        AsyncSession: Database session for the request.
-    """
+async def get_session():
+    """Dependency for providing async database sessions to routes."""
     async with async_session_maker() as session:
         yield session

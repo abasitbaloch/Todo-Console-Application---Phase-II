@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from src.core.config import settings
-from src.core.database import sync_engine  # Import the sync version
+from src.core.database import sync_engine
 from src.api import auth, tasks
 from src.models import User, Task
 

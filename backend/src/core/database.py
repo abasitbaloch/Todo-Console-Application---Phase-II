@@ -4,7 +4,6 @@ from sqlmodel import create_engine
 from .config import settings
 
 # --- ASYNC ENGINE (For FastAPI Routes) ---
-# Ensures the URL uses sqlite+aiosqlite://
 async_url = settings.DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://")
 async_engine = create_async_engine(
     async_url,
@@ -13,7 +12,6 @@ async_engine = create_async_engine(
 )
 
 # --- SYNC ENGINE (For Table Creation in main.py) ---
-# Ensures the URL uses standard sqlite://
 sync_url = settings.DATABASE_URL.replace("sqlite+aiosqlite://", "sqlite://")
 sync_engine = create_engine(
     sync_url,

@@ -10,15 +10,14 @@ from src.models import User, Task
 
 # --- DATABASE TABLE CREATION ---
 def create_db_and_tables():
+    """Uses the sync engine to create tables safely on startup."""
     SQLModel.metadata.create_all(sync_engine)
 
 # --- APP CONFIGURATION ---
-# We set redirect_slashes=False to stop the 307 errors
 app = FastAPI(
     title="Todo API",
     description="Full-Stack Todo Application API",
     version="1.0.0",
-    redirect_slashes=False 
 )
 
 # --- STARTUP EVENT ---
@@ -35,14 +34,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- ROUTES ---
+# --- BASE ROUTES ---
 @app.get("/")
 async def root():
-    return {"status": "online"}
+    return {"status": "online", "message": "Backend is running"}
 
-# Register routers
+# --- ROUTER REGISTRATION ---
+# Standard prefixes
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
-# Backup prefix
+
+# Backup prefixes for frontend compatibility
 app.include_router(auth.router, prefix="/api/auth", tags=["auth-backup"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks-backup"])

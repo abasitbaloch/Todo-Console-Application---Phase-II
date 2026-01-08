@@ -25,17 +25,17 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    from sqlmodel import SQLModel
     from src.core.database import sync_engine
-    # This ensures Neon creates your 'user' and 'task' tables immediately
-    print("Connecting to Neon and creating tables...")
+    from sqlmodel import SQLModel
+    # This reaches out to Neon and physically creates the 'user' and 'task' tables
+    print("Initializing Neon Database...")
     SQLModel.metadata.create_all(sync_engine)
-    print("Database sync complete!")
+    print("Neon Database ready!")
 
 # --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],  # Allows all domains (including your Vercel URL)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

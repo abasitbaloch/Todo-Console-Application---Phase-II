@@ -1,60 +1,65 @@
+// backend/src/lib/api.ts
 import { authService } from './client-auth';
-import { Task, TaskCreate, TaskUpdate } from './types'; // Import types to be safe
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://janabkakarot-todo-console-application.hf.space';
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = authService.getToken();
-
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      authService.logout();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
-      throw new Error('Unauthorized');
-    }
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'API request failed');
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
-}
+// Helper to ensure all URLs are HTTPS and have no double slashes
+const getUrl = (path: string) => {
+  const cleanBase = BASE_URL.replace('http://', 'https://').replace(/\/$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${cleanBase}${cleanPath}`;
+};
 
 export const api = {
-  getTasks: () => fetchWithAuth('/tasks/'),
+  async getTasks() {
+    const token = authService.getToken();
+    const response = await fetch(getUrl('/tasks'), {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  createTask: (title: string, description?: string) =>
-    fetchWithAuth('/tasks/', {
+    if (!response.ok) {
+      if (response.status === 401) authService.logout();
+      throw new Error('Failed to fetch tasks');
+    }
+    return response.json();
+  },
+
+  async createTask(title: string, description?: string) {
+    const token = authService.getToken();
+    const response = await fetch(getUrl('/tasks'), {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ title, description }),
-    }),
+    });
+    return response.json();
+  },
 
-  // CHANGED: taskId is now string, and accepts partial updates
-  updateTask: (taskId: string, updates: TaskUpdate) =>
-    fetchWithAuth(`/tasks/${taskId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    }),
+  async toggleTask(taskId: string, completed: boolean) {
+    const token = authService.getToken();
+    const response = await fetch(getUrl(`/tasks/${taskId}`), {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ is_completed: completed }),
+    });
+    return response.json();
+  },
 
-  // CHANGED: taskId is now string
-  deleteTask: (taskId: string) =>
-    fetchWithAuth(`/tasks/${taskId}`, {
+  async deleteTask(taskId: string) {
+    const token = authService.getToken();
+    await fetch(getUrl(`/tasks/${taskId}`), {
       method: 'DELETE',
-    }),
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
 };

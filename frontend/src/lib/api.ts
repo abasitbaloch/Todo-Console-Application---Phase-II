@@ -3,11 +3,15 @@ import { authService } from './client-auth';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://janabkakarot-todo-console-application.hf.space';
 
-// Helper to ensure all URLs are HTTPS and have no double slashes
+// frontend/src/lib/api.ts
+
+// Change your getUrl function to this:
 const getUrl = (path: string) => {
   const cleanBase = BASE_URL.replace('http://', 'https://').replace(/\/$/, '');
+  // Ensure path starts and ends with a slash
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${cleanBase}${cleanPath}`;
+  const finalPath = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
+  return `${cleanBase}${finalPath}`;
 };
 
 export const api = {

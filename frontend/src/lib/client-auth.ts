@@ -3,9 +3,14 @@ import { User, UserLogin, UserCreate, AuthResponse } from './types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://janabkakarot-todo-console-application.hf.space';
 
+// frontend/src/lib/client-auth.ts
+
+// Change your getUrl function to this:
 const getUrl = (path: string) => {
     const cleanBase = BASE_URL.replace('http://', 'https://').replace(/\/$/, '');
-    return `${cleanBase}${path}`;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    const finalPath = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
+    return `${cleanBase}${finalPath}`;
 };
 
 class AuthService {

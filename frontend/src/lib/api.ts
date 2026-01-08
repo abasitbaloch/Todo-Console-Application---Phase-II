@@ -1,23 +1,24 @@
-// backend/src/lib/api.ts
 import { authService } from './client-auth';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://janabkakarot-todo-console-application.hf.space';
+// Ensure the URL is HTTPS and has NO trailing slash at the end
+const BASE_URL = 'https://janabkakarot-todo-console-application.hf.space';
 
-// frontend/src/lib/api.ts
-
-// Change your getUrl function to this:
 const getUrl = (path: string) => {
-  const cleanBase = BASE_URL.replace('http://', 'https://').replace(/\/$/, '');
-  // Ensure path starts and ends with a slash
+  // Ensure path starts with / and remove any double slashes
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const finalPath = cleanPath.endsWith('/') ? cleanPath : `${cleanPath}/`;
-  return `${cleanBase}${finalPath}`;
+  // IMPORTANT: Remove any trailing slash from the final URL
+  return `${BASE_URL}${cleanPath}`.replace(/\/$/, "");
 };
 
 export const api = {
   async getTasks() {
     const token = authService.getToken();
-    const response = await fetch(getUrl('/tasks'), {
+    const url = getUrl('/tasks');
+
+    console.log("Fetching tasks from:", url);
+
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -29,41 +30,5 @@ export const api = {
       throw new Error('Failed to fetch tasks');
     }
     return response.json();
-  },
-
-  async createTask(title: string, description?: string) {
-    const token = authService.getToken();
-    const response = await fetch(getUrl('/tasks'), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ title, description }),
-    });
-    return response.json();
-  },
-
-  async toggleTask(taskId: string, completed: boolean) {
-    const token = authService.getToken();
-    const response = await fetch(getUrl(`/tasks/${taskId}`), {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ is_completed: completed }),
-    });
-    return response.json();
-  },
-
-  async deleteTask(taskId: string) {
-    const token = authService.getToken();
-    await fetch(getUrl(`/tasks/${taskId}`), {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
   }
 };

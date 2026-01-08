@@ -10,14 +10,15 @@ from src.models import User, Task
 
 # --- DATABASE TABLE CREATION ---
 def create_db_and_tables():
-    """Uses the sync engine to create tables without Greenlet errors."""
     SQLModel.metadata.create_all(sync_engine)
 
-# Create FastAPI application
+# --- APP CONFIGURATION ---
+# We set redirect_slashes=False to stop the 307 errors
 app = FastAPI(
     title="Todo API",
     description="Full-Stack Todo Application API",
     version="1.0.0",
+    redirect_slashes=False 
 )
 
 # --- STARTUP EVENT ---
@@ -34,17 +35,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- HOME ROUTES ---
+# --- ROUTES ---
 @app.get("/")
 async def root():
-    return {"status": "online", "message": "Backend is running!"}
+    return {"status": "online"}
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
-
-# --- ROUTER REGISTRATION ---
+# Register routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+# Backup prefix
 app.include_router(auth.router, prefix="/api/auth", tags=["auth-backup"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks-backup"])

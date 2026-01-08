@@ -1,20 +1,28 @@
 import { User, UserLogin, UserCreate, AuthResponse } from './types';
 
-// Use 127.0.0.1 to avoid IPv6 issues on Windows
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// We remove the http://127.0.0.1:8000 fallback to force the app to use the live URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 class AuthService {
     private tokenKey = 'access_token';
+
+    // Helper to ensure we don't try to fetch if the URL is missing
+    private getApiUrl(path: string) {
+        if (!API_URL) {
+            console.error("CRITICAL: NEXT_PUBLIC_API_URL is not defined!");
+            // Fallback for browser safety if variable is missing
+            return `https://janabkakarot-todo-console-application.hf.space${path}`;
+        }
+        return `${API_URL}${path}`;
+    }
 
     getToken(): string | null {
         if (typeof window === 'undefined') return null;
         return localStorage.getItem(this.tokenKey);
     }
 
-    // --- NEW: Added isAuthenticated method to fix the TypeError ---
     isAuthenticated(): boolean {
         const token = this.getToken();
-        // Returns true if token exists and is not empty
         return !!token;
     }
 
@@ -31,7 +39,7 @@ class AuthService {
 
     // --- REGISTER ---
     async register(data: UserCreate): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(this.getApiUrl('/auth/register'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
@@ -49,7 +57,7 @@ class AuthService {
 
     // --- LOGIN ---
     async login(data: UserLogin): Promise<AuthResponse> {
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(this.getApiUrl('/auth/login'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -74,7 +82,7 @@ class AuthService {
         if (!token) return null;
 
         try {
-            const response = await fetch(`${API_URL}/auth/me`, {
+            const response = await fetch(this.getApiUrl('/auth/me'), {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

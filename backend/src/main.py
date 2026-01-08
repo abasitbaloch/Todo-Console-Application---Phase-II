@@ -21,9 +21,16 @@ app = FastAPI(
 )
 
 # --- STARTUP EVENT ---
+# backend/src/main.py
+
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    from sqlmodel import SQLModel
+    from src.core.database import sync_engine
+    # This ensures Neon creates your 'user' and 'task' tables immediately
+    print("Connecting to Neon and creating tables...")
+    SQLModel.metadata.create_all(sync_engine)
+    print("Database sync complete!")
 
 # --- CORS CONFIGURATION ---
 app.add_middleware(
